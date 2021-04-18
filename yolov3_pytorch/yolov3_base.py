@@ -47,7 +47,7 @@ class Yolov3Base(nn.Module, metaclass=ABCMeta):
             p.requires_grad = requires_grad
     def unfreeze(self):
         for _, p in self.named_parameters():
-            p.requires_grad = True
+            p.requires_grad = False
     def freeze_info(self, print_all=False):
         d = defaultdict(set)
         print("Layer: param.requires_grad")
