@@ -8,15 +8,12 @@ class Yolov3Tiny(Yolov3Base):
 
     def __init__(self, num_classes, use_wrong_previous_anchors=False):
         super().__init__()
-
-        # QuantStub converts tensors from floating point to quantized
-        self.quant = torch.quantization.QuantStub()
         
         self.num_classes = num_classes
         self.return_out_boxes = False
         self.skip_backbone = False
 
-        self.backbone = Yolov3TinyBackbone()
+        self.backbone = Yolov3TinyBackbone()    
 
         anchors_per_region = 3
         self.yolo_0_pre = nn.Sequential(OrderedDict([
@@ -46,6 +43,9 @@ class Yolov3Tiny(Yolov3Base):
 
         self.yolo_1 = YoloLayer(anchors=yolo_1_anchors, stride=16.0, num_classes=num_classes)
 
+        # QuantStub converts tensors from floating point to quantized
+        self.quant = torch.quantization.QuantStub()
+        
         # DeQuantStub converts tensors from quantized to floating point
         self.dequant = torch.quantization.DeQuantStub()
         
