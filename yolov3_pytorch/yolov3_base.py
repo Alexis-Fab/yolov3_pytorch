@@ -12,6 +12,13 @@ class Yolov3Base(nn.Module, metaclass=ABCMeta):
 
     def __init__(self):
         super().__init__()
+        
+        # QuantStub converts tensors from floating point to quantized
+        self.quant = torch.quantization.QuantStub()
+        
+        # DeQuantStub converts tensors from quantized to floating point
+        self.dequant = torch.quantization.DeQuantStub()
+        
 
     @abstractmethod
     def get_loss_layers(self):
@@ -23,7 +30,9 @@ class Yolov3Base(nn.Module, metaclass=ABCMeta):
     def forward(self, x):
         shape = x.shape
         assert shape[1] == 3 and shape[2] % 32 == 0 and shape[3] % 32 == 0, f"Tensor shape should be [bs, 3, x*32, y*32], was {shape}"
+#        x = self.quant(x)
         xb = self.forward_backbone(x)
+ #       x = self.dequant(x)
         return self.forward_yolo(xb)
 
     def boxes_from_output(self, outputs, conf_thresh=0.25):
@@ -81,6 +90,11 @@ class Yolov3Base(nn.Module, metaclass=ABCMeta):
         #     state_dict[k_new] = state_dict_org[k_old]
 
         return self.load_state_dict(state_new, strict=False), skipped_layers
+    
+    def fuse_model(self):
+        for m in self.modules():
+            if type(m) == ConvBN:
+                torch.quantization.fuse_modules(m, [['conv', 'bn', 'relu']], inplace=True)
 
 
 ###################################################################
@@ -92,12 +106,24 @@ class ConvBN(nn.Module):
 
     def __init__(self, ch_in, ch_out, kernel_size = 3, stride=1, padding=None):
         super().__init__()
+                
         if padding is None: padding = (kernel_size - 1) // 2 # we should never need to set padding
         self.conv = nn.Conv2d(ch_in, ch_out, kernel_size=kernel_size, stride=stride, padding=padding, bias=False)
         self.bn = nn.BatchNorm2d(ch_out, momentum=0.01)
         self.relu = nn.LeakyReLU(0.1, inplace=True)
+        
+        # QuantStub converts tensors from floating point to quantized
+        self.quant = torch.quantization.QuantStub()
 
-    def forward(self, x): return self.relu(self.bn(self.conv(x)))
+        # DeQuantStub converts tensors from quantized to floating point
+        self.dequant = torch.quantization.DeQuantStub()
+        
+        
+    def forward(self, x):
+        x = self.quant(x)
+        x = self.relu(self.bn(self.conv(x)))
+        x = self.dequant(x)
+        return x
 
 
 class Upsample(nn.Module):

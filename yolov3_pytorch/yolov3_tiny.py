@@ -8,12 +8,12 @@ class Yolov3Tiny(Yolov3Base):
 
     def __init__(self, num_classes, use_wrong_previous_anchors=False):
         super().__init__()
-
+        
         self.num_classes = num_classes
         self.return_out_boxes = False
         self.skip_backbone = False
 
-        self.backbone = Yolov3TinyBackbone()
+        self.backbone = Yolov3TinyBackbone()    
 
         anchors_per_region = 3
         self.yolo_0_pre = nn.Sequential(OrderedDict([
@@ -43,16 +43,27 @@ class Yolov3Tiny(Yolov3Base):
 
         self.yolo_1 = YoloLayer(anchors=yolo_1_anchors, stride=16.0, num_classes=num_classes)
 
+        # QuantStub converts tensors from floating point to quantized
+        self.quant = torch.quantization.QuantStub()
+        
+        # DeQuantStub converts tensors from quantized to floating point
+        self.dequant = torch.quantization.DeQuantStub()
+        
     def get_loss_layers(self):
         return [self.yolo_0, self.yolo_1]
 
     def forward_yolo(self, xb):
         x_b_0, x_b_full = xb[0], xb[1]
+#        x_b_0 = self.quant(x_b_0)
+ #       x_b_full = self.quant(x_b_full)
         y0 = self.yolo_0_pre(x_b_full)
 
         x_up = self.up_1(x_b_full)
         x_up = torch.cat((x_up, x_b_0), 1)
         y1 = self.yolo_1_pre(x_up)
+        
+        y0 = self.dequant(y0)
+        y1 = self.dequant(y1)
 
         return [y0, y1]
 
