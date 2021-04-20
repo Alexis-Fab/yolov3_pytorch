@@ -92,16 +92,15 @@ class Yolov3Base(nn.Module, metaclass=ABCMeta):
         return self.load_state_dict(state_new, strict=False), skipped_layers
     
     def fuse_model(self):
-        modules_names = [m for m in self.named_modules()]
-        modules_list = [m for m in self.modules()]
-        for ind, m in enumerate(modules_list):
-            if type(m) == nn.Conv2d and type(modules_list[ind+1]) == nn.BatchNorm2d and type(modules_list[ind+2]) == nn.LeakyReLU:
-                print("Find ConvBNReLu: ", modules_names[ind][0], '-->', modules_names[ind+1][0], '-->', modules_names[ind+2][0])
-                torch.quantization.fuse_modules(self, [modules_names[ind][0], modules_names[ind+1][0], modules_names[ind+2][0]], inplace=True)        
-        
-#        for m in self.modules():
- #           if type(m) == ConvBN:
-  #              torch.quantization.fuse_modules(m, ['0', '1', '2'], inplace=True)
+#        modules_names = [m for m in self.named_modules()]
+ #       modules_list = [m for m in self.modules()]
+  #      for ind, m in enumerate(modules_list):
+   #         if type(m) == nn.Conv2d and type(modules_list[ind+1]) == nn.BatchNorm2d and type(modules_list[ind+2]) == nn.LeakyReLU:
+    #            print("Find ConvBNReLu: ", modules_names[ind][0], '-->', modules_names[ind+1][0], '-->', modules_names[ind+2][0])
+     #           torch.quantization.fuse_modules(self, [modules_names[ind][0], modules_names[ind+1][0], modules_names[ind+2][0]], inplace=True)        
+        for m in self.modules():
+            if type(m) == ConvBN:
+                torch.quantization.fuse_modules(m, ['conv', 'bn', 'relu'], inplace=True)
 
 
 ###################################################################
