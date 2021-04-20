@@ -90,6 +90,11 @@ class Yolov3Base(nn.Module, metaclass=ABCMeta):
         #     state_dict[k_new] = state_dict_org[k_old]
 
         return self.load_state_dict(state_new, strict=False), skipped_layers
+    
+    def fuse_model(self):
+        for m in self.modules():
+            if type(m) == ConvBN:
+                torch.quantization.fuse_modules(m, ['conv', 'bn', 'relu'], inplace=True)
 
 
 ###################################################################
