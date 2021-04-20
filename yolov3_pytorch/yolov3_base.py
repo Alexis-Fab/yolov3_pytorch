@@ -30,7 +30,9 @@ class Yolov3Base(nn.Module, metaclass=ABCMeta):
     def forward(self, x):
         shape = x.shape
         assert shape[1] == 3 and shape[2] % 32 == 0 and shape[3] % 32 == 0, f"Tensor shape should be [bs, 3, x*32, y*32], was {shape}"
+        x = self.quant(x)
         xb = self.forward_backbone(x)
+        x = self.dequant(x)
         return self.forward_yolo(xb)
 
     def boxes_from_output(self, outputs, conf_thresh=0.25):
