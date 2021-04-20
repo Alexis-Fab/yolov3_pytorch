@@ -94,7 +94,7 @@ class Yolov3Base(nn.Module, metaclass=ABCMeta):
     def fuse_model(self):
         for m in self.modules():
             if type(m) == ConvBN:
-                torch.quantization.fuse_modules(m, [['0', '1', '2']], inplace=True)
+                torch.quantization.fuse_modules(m, [['conv', 'bn', 'relu']], inplace=True)
 
 
 ###################################################################
