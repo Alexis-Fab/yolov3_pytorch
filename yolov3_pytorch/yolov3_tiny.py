@@ -54,8 +54,8 @@ class Yolov3Tiny(Yolov3Base):
 
     def forward_yolo(self, xb):
         x_b_0, x_b_full = xb[0], xb[1]
-        x_b_0 = self.quant(x_b_0)
-        x_b_full = self.quant(x_b_full)
+#        x_b_0 = self.quant(x_b_0)
+ #       x_b_full = self.quant(x_b_full)
         y0 = self.yolo_0_pre(x_b_full)
 
         x_up = self.up_1(x_b_full)
