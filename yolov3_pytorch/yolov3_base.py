@@ -11,10 +11,10 @@ from .yolo_layer import *
 class Yolov3Base(nn.Module, metaclass=ABCMeta):
 
     def __init__(self):
+        super().__init__()
+        
         # QuantStub converts tensors from floating point to quantized
         self.quant = torch.quantization.QuantStub()
-        
-        super().__init__()
         
         # DeQuantStub converts tensors from quantized to floating point
         self.dequant = torch.quantization.DeQuantStub()
