@@ -92,11 +92,19 @@ class ConvBN(nn.Module):
 
     def __init__(self, ch_in, ch_out, kernel_size = 3, stride=1, padding=None):
         super().__init__()
+        
+        # QuantStub converts tensors from floating point to quantized
+        self.quant = torch.quantization.QuantStub()
+        
         if padding is None: padding = (kernel_size - 1) // 2 # we should never need to set padding
         self.conv = nn.Conv2d(ch_in, ch_out, kernel_size=kernel_size, stride=stride, padding=padding, bias=False)
         self.bn = nn.BatchNorm2d(ch_out, momentum=0.01)
         self.relu = nn.LeakyReLU(0.1, inplace=True)
-
+        
+        # DeQuantStub converts tensors from quantized to floating point
+        self.dequant = torch.quantization.DeQuantStub()
+        
+        
     def forward(self, x): return self.relu(self.bn(self.conv(x)))
 
 
